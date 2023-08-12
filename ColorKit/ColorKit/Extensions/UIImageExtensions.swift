@@ -45,7 +45,7 @@ extension UIImage {
         guard let data = malloc(bytesTotal) else {
             return false
         }
-        guard let ctx = CGContext(data: data, width: orig.width, height: orig.height, bitsPerComponent: 8, bytesPerRow: bytesTotal, space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        guard let ctx = CGContext(data: data, width: orig.width, height: orig.height, bitsPerComponent: 8, bytesPerRow: bytesPerRow, space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
         else { return false }
         ctx.draw(orig, in: .init(origin: .zero, size: CGSize(width: orig.width, height: orig.height)))
         let dataStruct = NormalizedImageData(bytes: data.assumingMemoryBound(to: UInt8.self), width: orig.width, height: orig.height, bytesPerRow: bytesPerRow)
