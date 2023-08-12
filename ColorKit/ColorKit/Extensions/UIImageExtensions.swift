@@ -29,5 +29,29 @@ extension UIImage {
         
         return resizedImage
     }
+
+    struct NormalizedImageData {
+        var bytes: UnsafePointer<UInt8>
+        var width: Int
+        var height: Int
+        var bytesPerRow: Int
+    }
+    func withNormalizedImageData(_ block: (NormalizedImageData) -> Void) -> Bool {
+        guard let orig = cgImage,
+              let space = CGColorSpace(name: CGColorSpace.sRGB)
+        else { return false }
+        let bytesPerRow = orig.width * 4
+        let bytesTotal = bytesPerRow * orig.height
+        guard let data = malloc(bytesTotal) else {
+            return false
+        }
+        guard let ctx = CGContext(data: data, width: orig.width, height: orig.height, bitsPerComponent: 8, bytesPerRow: bytesTotal, space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else { return false }
+        ctx.draw(orig, in: .init(origin: .zero, size: CGSize(width: orig.width, height: orig.height)))
+        let dataStruct = NormalizedImageData(bytes: data.assumingMemoryBound(to: UInt8.self), width: orig.width, height: orig.height, bytesPerRow: bytesPerRow)
+        block(dataStruct)
+        free(data)
+        return true
+    }
     
 }

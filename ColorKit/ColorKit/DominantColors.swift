@@ -130,14 +130,14 @@ extension UIImage {
         let targetSize = quality.targetSize(for: resolution)
         
         let resizedImage = resize(to: targetSize)
-        guard let cgImage = resizedImage.cgImage else {
-            throw ImageColorError.cgImageFailure
-        }
-        
-        let cfData = cgImage.dataProvider!.data
-        guard let data = CFDataGetBytePtr(cfData) else {
-            throw ImageColorError.cgImageDataFailure
-        }
+//        guard let cgImage = resizedImage.cgImage else {
+//            throw ImageColorError.cgImageFailure
+//        }
+
+//        let cfData = cgImage.dataProvider!.data
+//        guard let data = CFDataGetBytePtr(cfData) else {
+//            throw ImageColorError.cgImageDataFailure
+//        }
         
         // ------
         // Step 2: Add each pixel to a NSCountedSet. This will give us a count for each color.
@@ -151,17 +151,36 @@ extension UIImage {
             let B: UInt8
         }
 
-        for yCoordonate in 0 ..< cgImage.height {
-            for xCoordonate in 0 ..< cgImage.width {
-                let index = (cgImage.width * yCoordonate + xCoordonate) * 4
-                
-                // Let's make sure there is enough alpha.
-                guard data[index + 3] > 150 else { continue }
-                
-                let pixelColor = RGB(R: data[index + 0], G: data[index + 1], B:  data[index + 2])
-                colorsCountedSet.add(pixelColor)
+        let success = resizedImage.withNormalizedImageData { data in
+            let bytes = data.bytes
+            for yCoord in 0 ..< data.height {
+                for xCoord in 0 ..< data.width {
+                    let index = data.bytesPerRow * yCoord + xCoord * 4
+
+                    // Let's make sure there is enough alpha.
+                    guard bytes[index + 3] > 150 else { continue }
+
+                    let pixelColor = RGB(R: bytes[index + 0], G: bytes[index + 1], B:  bytes[index + 2])
+                    colorsCountedSet.add(pixelColor)
+                }
             }
         }
+        if !success {
+            throw ImageColorError.cgImageDataFailure
+        }
+
+
+//        for _ in 0 ..< cgImage.height {
+//            for xCoord in 0 ..< cgImage.width {
+//                let index = (bytesPerRow + xCoord * 4)
+//
+//                // Let's make sure there is enough alpha.
+//                guard data[index + 3] > 150 else { continue }
+//
+//                let pixelColor = RGB(R: data[index + 0], G: data[index + 1], B:  data[index + 2])
+//                colorsCountedSet.add(pixelColor)
+//            }
+//        }
         
         // ------
         // Step 3: Remove colors that are barely present on the image.
